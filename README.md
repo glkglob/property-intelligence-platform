@@ -1,6 +1,6 @@
 # Property Intelligence Platform
 
-A clean Vite + React + Tailwind showcase for the Property Intelligence Platform.
+Private beta — SaaS for UK property investors. Vite 5 · React 19 · TypeScript strict · Tailwind v4 · Supabase.
 
 ## Product positioning
 
@@ -21,13 +21,31 @@ npm run dev
 npm run build
 ```
 
-## Push to GitHub
+## Environment
+
+Copy `.env.example` to `.env.local` and fill in values before running:
+
+```
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
+VITE_SENTRY_DSN=
+```
+
+## Tests
+
+Install test tooling first, then run:
 
 ```bash
-git init
-git remote add origin https://github.com/glkglob/property-intelligence-platform.git
-git checkout -b main
-git add .
-git commit -m "feat: add property intelligence platform showcase"
-git push -u origin main
+npm install -D vitest @testing-library/react @testing-library/user-event jsdom
+npm run test
 ```
+
+## Modules
+
+- **Refurb Genius** — core refurbishment estimate engine
+- **Deal Copilot** — acquisition intelligence and deal scoring
+- **Refurb IQ** — BOQ, cost planning, and contractor-grade outputs
+
+## Status
+
+The landing page is live. The authenticated app (auth, properties, estimates) is scaffolded and in active development. See `docs/BETA_PLAN.md` for roadmap.
