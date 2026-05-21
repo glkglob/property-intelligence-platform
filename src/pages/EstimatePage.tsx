@@ -14,22 +14,25 @@ function EstimatePage(): React.JSX.Element {
   return (
     <Layout title="Refurb estimate">
       <div className="mx-auto max-w-2xl">
-        <p className="mb-8 text-sm text-slate-500">
-          Select refurbishment works to generate an instant cost estimate. Costs are calculated
-          using fixed unit rates. Save the estimate to your account to revisit it later.
-        </p>
-
-        <EstimateForm propertyId={propertyId} />
-
-        {propertyId && (
-          <div className="mt-8">
-            <Link
-              to={`/properties/${propertyId}`}
-              className="text-sm text-slate-500 hover:text-slate-900"
-            >
-              ← Back to property
-            </Link>
+        {!propertyId ? (
+          <div className="rounded-3xl border border-red-100 bg-red-50 p-6 text-sm text-red-700 shadow-sm">
+            No property selected — cannot create an estimate.
           </div>
+        ) : (
+          <>
+            <p className="mb-8 text-sm text-slate-500">
+              Add rooms and line items to build a cost plan. Save when ready.
+            </p>
+            <EstimateForm propertyId={propertyId} />
+            <div className="mt-8">
+              <Link
+                to={`/properties/${propertyId}`}
+                className="text-sm text-slate-500 hover:text-slate-900"
+              >
+                ← Back to property
+              </Link>
+            </div>
+          </>
         )}
       </div>
     </Layout>

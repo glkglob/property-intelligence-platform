@@ -2,7 +2,9 @@ import React from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import ProtectedRoute from '../components/ProtectedRoute';
 import AuthCallback from '../pages/AuthCallback';
+import Dashboard from '../pages/Dashboard';
 import DealCopilot from '../pages/DealCopilot';
+import EstimateDetail from '../pages/EstimateDetail';
 import EstimatePage from '../pages/EstimatePage';
 import LandingPage from '../pages/LandingPage';
 import Login from '../pages/Login';
@@ -20,6 +22,14 @@ function AppRoutes(): React.JSX.Element {
       <Route path="/signup" element={<Signup />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
 
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/properties"
         element={
@@ -49,6 +59,14 @@ function AppRoutes(): React.JSX.Element {
         element={
           <ProtectedRoute>
             <EstimatePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/estimates/:estimateId"
+        element={
+          <ProtectedRoute>
+            <EstimateDetail />
           </ProtectedRoute>
         }
       />

@@ -1,7 +1,8 @@
 import { createBrowserClient } from '@supabase/ssr';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '../types/database';
 
-let client: SupabaseClient | undefined;
+let client: SupabaseClient<Database> | undefined;
 
 export function hasSupabaseEnv(): boolean {
   return Boolean(
@@ -9,7 +10,7 @@ export function hasSupabaseEnv(): boolean {
   );
 }
 
-export function getSupabaseClient(): SupabaseClient {
+export function getSupabaseClient(): SupabaseClient<Database> {
   if (client) return client;
 
   const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
@@ -27,6 +28,6 @@ export function getSupabaseClient(): SupabaseClient {
     );
   }
 
-  client = createBrowserClient(url!, anonKey!);
+  client = createBrowserClient<Database>(url!, anonKey!);
   return client;
 }
