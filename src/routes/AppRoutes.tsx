@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import ProtectedRoute from '../components/ProtectedRoute';
+import AuthCallback from '../pages/AuthCallback';
 import DealCopilot from '../pages/DealCopilot';
 import EstimatePage from '../pages/EstimatePage';
 import LandingPage from '../pages/LandingPage';
@@ -17,6 +18,7 @@ function AppRoutes(): React.JSX.Element {
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
 
       <Route
         path="/properties"

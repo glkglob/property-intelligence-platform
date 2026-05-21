@@ -1,11 +1,31 @@
 -- =============================================================================
 -- Supabase Schema Reference
--- Source of truth: supabase/migrations/20260521000000_initial_schema.sql
--- This file is a human-readable summary; the migration file is authoritative.
+-- Sources of truth:
+--   supabase/migrations/20260521000000_initial_schema.sql  (properties, estimates, deals)
+--   supabase/migrations/20260521000001_profiles.sql        (profiles table + RLS)
+--   supabase/migrations/20260521000002_profiles_auto_create.sql  (email column + signup trigger)
+-- This file is a human-readable summary; the migration files are authoritative.
 -- =============================================================================
 
 -- NOTE: an earlier stub in this file named the estimates table "refurb_estimates".
 -- The correct table name is "estimates". The migration is definitive.
+
+-- ---------------------------------------------------------------------------
+-- profiles  (migrations: 00001, 00002)
+-- ---------------------------------------------------------------------------
+-- id                uuid        PK  FK → auth.users(id) ON DELETE CASCADE
+--                               id = auth.uid() — no separate user_id column
+-- email             text        NULLABLE  (added in 00002; null for pre-migration rows)
+-- full_name         text        NULLABLE
+-- avatar_url        text        NULLABLE
+-- subscription_tier text        NOT NULL  DEFAULT 'free'  ('free'|'pro'|'enterprise')
+-- created_at        timestamptz NOT NULL  DEFAULT now()
+-- updated_at        timestamptz NOT NULL  DEFAULT now()
+--
+-- RLS: SELECT open to everyone; INSERT/UPDATE restricted to own row (auth.uid() = id)
+-- Auto-create: trigger on_auth_user_created fires after INSERT on auth.users,
+--   calling handle_new_user() (security definer) to insert id/email/subscription_tier.
+--   ON CONFLICT (id) DO NOTHING makes it safe against duplicates.
 
 -- ---------------------------------------------------------------------------
 -- properties
