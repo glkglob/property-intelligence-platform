@@ -82,6 +82,10 @@ Deno.serve(async (req) => {
     });
     y = pageH - 100;
 
+    // Property Details heading
+    currentPage.drawText('Property Details', { x: 40, y, size: 11, font: bold, color: rgb(0.45, 0.45, 0.45) });
+    y -= 18;
+
     // Meta
     currentPage.drawText(estimate.description, { x: 40, y, size: 14, font: bold });
     y -= 20;
@@ -142,16 +146,23 @@ Deno.serve(async (req) => {
     }
 
     // Grand total
-    ensureSpace(40);
+    ensureSpace(50);
     y -= 10;
+    currentPage.drawRectangle({
+      x: 40,
+      y: y - 12,
+      width: pageW - 80,
+      height: 34,
+      color: rgb(0.95, 0.95, 0.95),
+    });
     currentPage.drawLine({
-      start: { x: 40, y },
-      end: { x: pageW - 40, y },
+      start: { x: 40, y: y + 22 },
+      end: { x: pageW - 40, y: y + 22 },
       thickness: 1,
       color: rgb(0.06, 0.73, 0.51),
     });
-    y -= 18;
-    currentPage.drawText('Total estimate', { x: 40, y, size: 14, font: bold });
+    y += 4;
+    currentPage.drawText('Total estimate', { x: 48, y, size: 14, font: bold });
     currentPage.drawText(`£${estimate.total_cost.toLocaleString('en-GB')}`, {
       x: pageW - 40,
       y,

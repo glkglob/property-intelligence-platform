@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Download } from 'lucide-react';
+import { ArrowLeft, Eye } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import Layout from '../components/Layout';
-import { exportEstimatePDF } from '../lib/exportEstimatePDF';
+import PDFPreviewModal from '../components/PDFPreviewModal';
+import { fetchEstimatePDFBlob } from '../lib/exportEstimatePDF';
 import { getSupabaseClient } from '../lib/supabaseClient';
 import type { StoredEstimate } from '../types/estimate';
 import type { Item } from '../types/item';
@@ -18,6 +19,8 @@ function EstimateDetail(): React.JSX.Element {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     if (!estimateId) return;
@@ -70,12 +73,12 @@ function EstimateDetail(): React.JSX.Element {
     };
   }, [estimateId]);
 
-  async function handleExport(): Promise<void> {
+  async function handlePreview(): Promise<void> {
     if (!estimate) return;
     setIsExporting(true);
     setExportError(null);
     try {
-      await exportEstimatePDF({
+      const blob = await fetchEstimatePDFBlob({
         description: estimate.description,
         total_cost: estimate.total_cost,
         created_at: estimate.created_at,
@@ -89,6 +92,8 @@ function EstimateDetail(): React.JSX.Element {
           })),
         })),
       });
+      setPdfBlob(blob);
+      setShowPreview(true);
     } catch (err) {
       setExportError(err instanceof Error ? err.message : 'Export failed.');
     } finally {
@@ -131,12 +136,12 @@ function EstimateDetail(): React.JSX.Element {
 
               <button
                 type="button"
-                onClick={() => void handleExport()}
+                onClick={() => void handlePreview()}
                 disabled={isExporting}
                 className="flex shrink-0 items-center gap-2 rounded-2xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-400 disabled:opacity-50"
               >
-                <Download className="h-4 w-4" />
-                {isExporting ? 'Generating…' : 'Export PDF'}
+                <Eye className="h-4 w-4" />
+                {isExporting ? 'Generating…' : 'Preview PDF'}
               </button>
             </div>
 
@@ -222,6 +227,12 @@ function EstimateDetail(): React.JSX.Element {
           </>
         ) : null}
       </div>
+      <PDFPreviewModal
+        isOpen={showPreview}
+        onClose={() => setShowPreview(false)}
+        pdfBlob={pdfBlob}
+        fileName={`Estimate_${(estimate?.description ?? 'Unknown').replace(/[^a-z0-9]/gi, '_').slice(0, 40)}.pdf`}
+      />
     </Layout>
   );
 }
