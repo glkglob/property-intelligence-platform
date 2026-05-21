@@ -1,7 +1,60 @@
--- Supabase Schema
+-- =============================================================================
+-- Supabase Schema Reference
+-- Source of truth: supabase/migrations/20260521000000_initial_schema.sql
+-- This file is a human-readable summary; the migration file is authoritative.
+-- =============================================================================
 
+-- NOTE: an earlier stub in this file named the estimates table "refurb_estimates".
+-- The correct table name is "estimates". The migration is definitive.
+
+-- ---------------------------------------------------------------------------
 -- properties
--- refurb_estimates
--- deals
+-- ---------------------------------------------------------------------------
+-- id          uuid        PK  default gen_random_uuid()
+-- user_id     uuid        NOT NULL  FK → auth.users(id) ON DELETE CASCADE
+--                                   DEFAULT auth.uid()
+-- address     text        NOT NULL
+-- postcode    text        NOT NULL
+-- type        text        NOT NULL
+-- bedrooms    integer     NOT NULL  CHECK (bedrooms > 0)
+-- created_at  timestamptz NOT NULL  DEFAULT now()
+-- updated_at  timestamptz NOT NULL  DEFAULT now()
+--
+-- Indexes: user_id, created_at DESC
+-- RLS:     authenticated users read/write their own rows only
 
--- row level security policies
+-- ---------------------------------------------------------------------------
+-- estimates
+-- ---------------------------------------------------------------------------
+-- id                  uuid        PK  default gen_random_uuid()
+-- user_id             uuid        NOT NULL  FK → auth.users(id) ON DELETE CASCADE
+--                                           DEFAULT auth.uid()
+-- property_id         uuid        NOT NULL  FK → properties(id) ON DELETE CASCADE
+-- description         text        NOT NULL  (human-readable line-item summary)
+-- refurb_budget       numeric     NULLABLE
+-- total_cost          numeric     NOT NULL
+-- gdv                 numeric     NULLABLE
+-- max_purchase_price  numeric     NULLABLE
+-- projected_profit    numeric     NULLABLE
+-- created_at          timestamptz NOT NULL  DEFAULT now()
+-- updated_at          timestamptz NOT NULL  DEFAULT now()
+--
+-- Indexes: user_id, property_id, (property_id, created_at DESC)
+-- RLS:     authenticated users read/write their own rows only
+
+-- ---------------------------------------------------------------------------
+-- deals  (routes gated — schema present for type parity)
+-- ---------------------------------------------------------------------------
+-- id              uuid        PK  default gen_random_uuid()
+-- user_id         uuid        NOT NULL  FK → auth.users(id) ON DELETE CASCADE
+--                                       DEFAULT auth.uid()
+-- property_id     uuid        NOT NULL  FK → properties(id) ON DELETE CASCADE
+-- estimate_id     uuid        NOT NULL  FK → estimates(id) ON DELETE CASCADE
+-- score           numeric     NOT NULL
+-- recommendation  text        NOT NULL  CHECK IN ('proceed','review','reject')
+-- notes           text        NULLABLE
+-- created_at      timestamptz NOT NULL  DEFAULT now()
+-- updated_at      timestamptz NOT NULL  DEFAULT now()
+--
+-- Indexes: user_id, property_id
+-- RLS:     authenticated users read/write their own rows only

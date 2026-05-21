@@ -1,5 +1,5 @@
 import React from 'react';
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import ProtectedRoute from '../components/ProtectedRoute';
 import DealCopilot from '../pages/DealCopilot';
 import EstimatePage from '../pages/EstimatePage';
@@ -66,6 +66,8 @@ function AppRoutes(): React.JSX.Element {
           </ProtectedRoute>
         }
       />
+
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

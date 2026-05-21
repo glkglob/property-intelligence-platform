@@ -8,7 +8,7 @@ function LoadingState({
   label = 'Loading...',
 }: LoadingStateProps): React.JSX.Element {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
+    <div className="rounded-2xl border border-white/10 bg-slate-900 p-6 text-sm text-slate-400">
       {label}
     </div>
   );

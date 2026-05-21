@@ -1,5 +1,6 @@
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
+import ComingSoonCard from '../components/ComingSoonCard';
 import Layout from '../components/Layout';
 
 function RefurbIQ(): React.JSX.Element {
@@ -7,14 +8,19 @@ function RefurbIQ(): React.JSX.Element {
 
   return (
     <Layout title="Refurb IQ">
-      <div className="grid gap-6">
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="text-sm text-slate-500">Property ID: {propertyId}</div>
-          <div className="mt-4 text-lg font-bold">BOQ placeholder</div>
-          <p className="mt-2 text-sm text-slate-600">
-            This page will show estimate line items and export actions.
-          </p>
-        </section>
+      <div className="mx-auto max-w-2xl">
+        <ComingSoonCard featureName="Refurb IQ" />
+
+        {propertyId && (
+          <div className="mt-8">
+            <Link
+              to={`/properties/${propertyId}`}
+              className="text-sm text-slate-500 hover:text-slate-900"
+            >
+              ← Back to property
+            </Link>
+          </div>
+        )}
       </div>
     </Layout>
   );
