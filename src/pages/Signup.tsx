@@ -1,13 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import Layout from '../components/Layout';
+import { ArrowRight, Building2 } from 'lucide-react';
 import { trackEvent } from '../lib/analytics';
 import { getSupabaseClient } from '../lib/supabaseClient';
-
-interface SignupForm {
-  email: string;
-  password: string;
-}
 
 function Signup(): React.JSX.Element {
   const navigate = useNavigate();
@@ -16,15 +11,11 @@ function Signup(): React.JSX.Element {
     trackEvent('signup_viewed');
   }, []);
 
-  const [form, setForm] = useState<SignupForm>({ email: '', password: '' });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>): void {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
@@ -32,16 +23,16 @@ function Signup(): React.JSX.Element {
     setMessage(null);
     setError(null);
 
-    try {
-      if (form.password.length < 8) {
-        setError('Password must be at least 8 characters.');
-        setIsSubmitting(false);
-        return;
-      }
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      setIsSubmitting(false);
+      return;
+    }
 
+    try {
       const { data, error: authError } = await getSupabaseClient().auth.signUp({
-        email: form.email,
-        password: form.password,
+        email,
+        password,
       });
 
       if (authError) {
@@ -51,36 +42,59 @@ function Signup(): React.JSX.Element {
       }
 
       if (data.session) {
-        // Email confirmation not required — user is immediately authenticated
         navigate('/properties', { replace: true });
         return;
       }
 
       // Email confirmation required (default Supabase behaviour)
-      setMessage(
-        'Check your email to confirm your account. You can sign in once confirmed.',
-      );
+      setMessage('Check your email to confirm your account. You can sign in once confirmed.');
       setIsSubmitting(false);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Sign up failed. Please try again.',
-      );
+      setError(err instanceof Error ? err.message : 'Sign up failed. Please try again.');
       setIsSubmitting(false);
     }
   }
 
   return (
-    <Layout title="Join the beta">
-      <div className="mx-auto max-w-md">
-        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-          <p className="mb-6 text-sm text-slate-500">
-            Private beta &mdash; invites are sent directly. Enter your details to request access.
+    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-6">
+      <div className="w-full max-w-md">
+        <div className="mb-8 flex justify-center">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-400 text-slate-950">
+              <Building2 className="h-7 w-7" />
+            </div>
+            <p className="text-2xl font-bold text-white">Property Intelligence</p>
+          </div>
+        </div>
+
+        <div className="rounded-3xl border border-white/10 bg-slate-900 p-10">
+          <h1 className="mb-2 text-center text-3xl font-bold text-white">Join the beta</h1>
+          <p className="mb-8 text-center text-slate-400">
+            Private beta — invites are sent directly.
           </p>
 
-          <form className="grid gap-4" onSubmit={handleSubmit} noValidate>
-            <div className="grid gap-2">
-              <label htmlFor="signup-email" className="text-sm font-medium text-slate-700">
-                Email
+          {error && (
+            <div
+              role="alert"
+              className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400"
+            >
+              {error}
+            </div>
+          )}
+
+          {message && (
+            <div
+              role="status"
+              className="mb-6 rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-3 text-sm text-emerald-300"
+            >
+              {message}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} noValidate className="space-y-5">
+            <div>
+              <label htmlFor="signup-email" className="mb-2 block text-sm font-medium text-slate-300">
+                Email address
               </label>
               <input
                 id="signup-email"
@@ -88,15 +102,16 @@ function Signup(): React.JSX.Element {
                 type="email"
                 autoComplete="email"
                 required
-                value={form.email}
-                onChange={handleChange}
-                disabled={isSubmitting}
-                className="rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-950 disabled:opacity-50"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isSubmitting || !!message}
+                placeholder="you@example.com"
+                className="w-full rounded-2xl border border-white/20 bg-slate-950 px-5 py-3.5 text-white placeholder:text-slate-500 focus:border-emerald-400 focus:outline-none disabled:opacity-50"
               />
             </div>
 
-            <div className="grid gap-2">
-              <label htmlFor="signup-password" className="text-sm font-medium text-slate-700">
+            <div>
+              <label htmlFor="signup-password" className="mb-2 block text-sm font-medium text-slate-300">
                 Password
               </label>
               <input
@@ -105,49 +120,37 @@ function Signup(): React.JSX.Element {
                 type="password"
                 autoComplete="new-password"
                 required
-                value={form.password}
-                onChange={handleChange}
-                disabled={isSubmitting}
-                className="rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-950 disabled:opacity-50"
+                minLength={8}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isSubmitting || !!message}
+                placeholder="Create a strong password"
+                className="w-full rounded-2xl border border-white/20 bg-slate-950 px-5 py-3.5 text-white placeholder:text-slate-500 focus:border-emerald-400 focus:outline-none disabled:opacity-50"
               />
+              <p className="mt-1.5 text-xs text-slate-500">Must be at least 8 characters</p>
             </div>
 
-            {error && (
-              <p
-                role="alert"
-                className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700"
+            {!message && (
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex w-full items-center justify-center gap-3 rounded-2xl bg-emerald-400 py-4 font-semibold text-slate-950 transition-all hover:bg-emerald-300 disabled:opacity-70"
               >
-                {error}
-              </p>
+                {isSubmitting ? 'Requesting access…' : 'Request access'}
+                {!isSubmitting && <ArrowRight className="h-4 w-4" />}
+              </button>
             )}
-
-            {message && (
-              <p
-                role="status"
-                className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600"
-              >
-                {message}
-              </p>
-            )}
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
-            >
-              {isSubmitting ? 'Requesting access…' : 'Request access'}
-            </button>
           </form>
 
-          <p className="mt-6 text-sm text-slate-500">
+          <p className="mt-8 text-center text-sm text-slate-400">
             Already have access?{' '}
-            <Link to="/login" className="font-medium text-slate-950 hover:underline">
+            <Link to="/login" className="text-emerald-400 hover:underline">
               Sign in
             </Link>
           </p>
         </div>
       </div>
-    </Layout>
+    </div>
   );
 }
 

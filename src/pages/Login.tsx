@@ -1,26 +1,17 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import Layout from '../components/Layout';
+import { ArrowRight, Building2 } from 'lucide-react';
 import { getSupabaseClient } from '../lib/supabaseClient';
-
-interface LoginForm {
-  email: string;
-  password: string;
-}
 
 function Login(): React.JSX.Element {
   const location = useLocation();
   const navigate = useNavigate();
   const redirectTo = (location.state as { from?: string } | null)?.from ?? '/properties';
 
-  const [form, setForm] = useState<LoginForm>({ email: '', password: '' });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>): void {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
@@ -29,8 +20,8 @@ function Login(): React.JSX.Element {
 
     try {
       const { error: authError } = await getSupabaseClient().auth.signInWithPassword({
-        email: form.email,
-        password: form.password,
+        email,
+        password,
       });
 
       if (authError) {
@@ -42,26 +33,43 @@ function Login(): React.JSX.Element {
       navigate(redirectTo, { replace: true });
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message
-          : 'Sign in failed. Check your credentials and try again.',
+        err instanceof Error ? err.message : 'Sign in failed. Check your credentials and try again.',
       );
       setIsSubmitting(false);
     }
   }
 
   return (
-    <Layout title="Sign in">
-      <div className="mx-auto max-w-md">
-        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-          <p className="mb-6 text-sm text-slate-500">
-            Private beta &mdash; access is invite-only.
+    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-6">
+      <div className="w-full max-w-md">
+        <div className="mb-8 flex justify-center">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-400 text-slate-950">
+              <Building2 className="h-7 w-7" />
+            </div>
+            <p className="text-2xl font-bold text-white">Property Intelligence</p>
+          </div>
+        </div>
+
+        <div className="rounded-3xl border border-white/10 bg-slate-900 p-10">
+          <h1 className="mb-2 text-center text-3xl font-bold text-white">Welcome back</h1>
+          <p className="mb-8 text-center text-slate-400">
+            Private beta — access is invite-only.
           </p>
 
-          <form className="grid gap-4" onSubmit={handleSubmit} noValidate>
-            <div className="grid gap-2">
-              <label htmlFor="login-email" className="text-sm font-medium text-slate-700">
-                Email
+          {error && (
+            <div
+              role="alert"
+              className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400"
+            >
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} noValidate className="space-y-5">
+            <div>
+              <label htmlFor="login-email" className="mb-2 block text-sm font-medium text-slate-300">
+                Email address
               </label>
               <input
                 id="login-email"
@@ -69,15 +77,16 @@ function Login(): React.JSX.Element {
                 type="email"
                 autoComplete="email"
                 required
-                value={form.email}
-                onChange={handleChange}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 disabled={isSubmitting}
-                className="rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-950 disabled:opacity-50"
+                placeholder="you@example.com"
+                className="w-full rounded-2xl border border-white/20 bg-slate-950 px-5 py-3.5 text-white placeholder:text-slate-500 focus:border-emerald-400 focus:outline-none disabled:opacity-50"
               />
             </div>
 
-            <div className="grid gap-2">
-              <label htmlFor="login-password" className="text-sm font-medium text-slate-700">
+            <div>
+              <label htmlFor="login-password" className="mb-2 block text-sm font-medium text-slate-300">
                 Password
               </label>
               <input
@@ -86,40 +95,33 @@ function Login(): React.JSX.Element {
                 type="password"
                 autoComplete="current-password"
                 required
-                value={form.password}
-                onChange={handleChange}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 disabled={isSubmitting}
-                className="rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-950 disabled:opacity-50"
+                placeholder="••••••••"
+                className="w-full rounded-2xl border border-white/20 bg-slate-950 px-5 py-3.5 text-white placeholder:text-slate-500 focus:border-emerald-400 focus:outline-none disabled:opacity-50"
               />
             </div>
-
-            {error && (
-              <p
-                role="alert"
-                className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700"
-              >
-                {error}
-              </p>
-            )}
 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-3 rounded-2xl bg-emerald-400 py-4 font-semibold text-slate-950 transition-all hover:bg-emerald-300 disabled:opacity-70"
             >
               {isSubmitting ? 'Signing in…' : 'Sign in'}
+              {!isSubmitting && <ArrowRight className="h-4 w-4" />}
             </button>
           </form>
 
-          <p className="mt-6 text-sm text-slate-500">
+          <p className="mt-8 text-center text-sm text-slate-400">
             No account yet?{' '}
-            <Link to="/signup" className="font-medium text-slate-950 hover:underline">
+            <Link to="/signup" className="text-emerald-400 hover:underline">
               Join the beta
             </Link>
           </p>
         </div>
       </div>
-    </Layout>
+    </div>
   );
 }
 
