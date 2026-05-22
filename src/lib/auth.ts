@@ -82,7 +82,9 @@ export async function signUp(credentials: AuthCredentials): Promise<AuthSession>
 
 export async function signOut(): Promise<void> {
   const { error } = await getSupabaseClient().auth.signOut();
-  if (error) throw error;
+  if (error) {
+    trackEvent('save_failed', { context: 'sign_out', message: error.message });
+  }
 }
 
 export function onAuthStateChange(handler: AuthStateChangeHandler): () => void {
