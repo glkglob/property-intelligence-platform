@@ -47,18 +47,51 @@ function EstimateDetail(): React.JSX.Element {
 
         const { data: roomsData, error: roomsError } = await supabase
           .from('rooms')
-          .select('*, items(*)')
+          .select('*')
           .eq('estimate_id', id)
-          .order('created_at', { ascending: true });
+          .order('display_order', { ascending: true, nullsFirst: false });
 
         if (cancelled) return;
-
         if (roomsError) {
           setFetchError(roomsError.message);
-        } else {
-          setEstimate(estimateData);
-          setRooms((roomsData ?? []) as RoomWithItems[]);
+          return;
         }
+
+        const fetchedRooms = roomsData ?? [];
+        let roomsWithItems: RoomWithItems[];
+
+        if (fetchedRooms.length === 0) {
+          roomsWithItems = [];
+        } else {
+          const roomIds = fetchedRooms.map((r) => r.id);
+
+          const { data: itemsData, error: itemsError } = await supabase
+            .from('items')
+            .select('*')
+            .in('room_id', roomIds)
+            .order('display_order', { ascending: true, nullsFirst: false });
+
+          if (cancelled) return;
+          if (itemsError) {
+            setFetchError(itemsError.message);
+            return;
+          }
+
+          const itemsByRoom = new Map<string, Item[]>();
+          for (const item of itemsData ?? []) {
+            const bucket = itemsByRoom.get(item.room_id) ?? [];
+            bucket.push(item);
+            itemsByRoom.set(item.room_id, bucket);
+          }
+
+          roomsWithItems = fetchedRooms.map((room) => ({
+            ...room,
+            items: itemsByRoom.get(room.id) ?? [],
+          }));
+        }
+
+        setEstimate(estimateData);
+        setRooms(roomsWithItems);
       } catch (err) {
         if (!cancelled)
           setFetchError(err instanceof Error ? err.message : 'Failed to load estimate.');

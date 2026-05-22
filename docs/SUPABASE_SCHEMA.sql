@@ -4,6 +4,7 @@
 --   supabase/migrations/20260521000000_initial_schema.sql  (properties, estimates, deals)
 --   supabase/migrations/20260521000001_profiles.sql        (profiles table + RLS)
 --   supabase/migrations/20260521000002_profiles_auto_create.sql  (email column + signup trigger)
+--   supabase/migrations/202605220001_align_estimate_rooms_items.sql  (rooms, items + RLS)
 -- This file is a human-readable summary; the migration files are authoritative.
 -- =============================================================================
 
@@ -61,6 +62,38 @@
 --
 -- Indexes: user_id, property_id, (property_id, created_at DESC)
 -- RLS:     authenticated users read/write their own rows only
+
+-- ---------------------------------------------------------------------------
+-- rooms  (migration: 202605220001)
+-- ---------------------------------------------------------------------------
+-- id            uuid        PK  default gen_random_uuid()
+-- estimate_id   uuid        NOT NULL  FK → estimates(id) ON DELETE CASCADE
+-- name          text        NOT NULL
+-- total_cost    numeric     NOT NULL  DEFAULT 0
+-- display_order integer     NOT NULL  DEFAULT 0
+-- created_at    timestamptz NOT NULL  DEFAULT now()
+--
+-- Indexes: estimate_id, (estimate_id, display_order)
+-- RLS:     users read/write rows whose estimate_id → estimates.property_id → properties.user_id = auth.uid()
+
+-- ---------------------------------------------------------------------------
+-- items  (migration: 202605220001)
+-- ---------------------------------------------------------------------------
+-- id            uuid        PK  default gen_random_uuid()
+-- room_id       uuid        NOT NULL  FK → rooms(id) ON DELETE CASCADE
+-- name          text        NOT NULL
+-- category      text        NOT NULL  DEFAULT 'Materials'
+-- quantity      numeric     NOT NULL  DEFAULT 1
+-- unit_cost     numeric     NOT NULL  DEFAULT 0
+-- unit          text        NOT NULL  DEFAULT 'unit'
+-- total_cost    numeric     NOT NULL  DEFAULT 0
+-- display_order integer     NOT NULL  DEFAULT 0
+-- created_at    timestamptz NOT NULL  DEFAULT now()
+--
+-- Indexes: room_id, (room_id, display_order)
+-- RLS:     users read/write rows whose room → estimate → property → user_id = auth.uid()
+--          Ownership chain: items.room_id → rooms.estimate_id → estimates.property_id → properties.user_id
+
 
 -- ---------------------------------------------------------------------------
 -- deals  (routes gated — schema present for type parity)

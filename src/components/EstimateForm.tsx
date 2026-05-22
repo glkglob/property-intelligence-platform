@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Download, Plus, Save, Trash2 } from 'lucide-react';
 import { trackEvent } from '../lib/analytics';
 import { generateEstimatePDF } from '../lib/generateEstimatePDF';
@@ -24,6 +25,8 @@ interface EstimateFormProps {
 }
 
 function EstimateForm({ propertyId }: EstimateFormProps): React.JSX.Element {
+  const navigate = useNavigate();
+
   const [description, setDescription] = useState('');
   const [rooms, setRooms] = useState<Room[]>([
     { id: crypto.randomUUID(), name: 'Kitchen', items: [] },
@@ -35,27 +38,31 @@ function EstimateForm({ propertyId }: EstimateFormProps): React.JSX.Element {
 
   const totalCost = rooms.reduce(
     (sum, room) =>
-      sum + room.items.reduce((s, item) => s + item.quantity * item.unit_cost, 0),
+      sum + room.items.reduce((itemSum, item) => itemSum + item.quantity * item.unit_cost, 0),
     0,
   );
 
   function addRoom(): void {
     setRooms((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), name: 'New Room', items: [] },
+      {
+        id: crypto.randomUUID(),
+        name: `Room ${prev.length + 1}`,
+        items: [],
+      },
     ]);
   }
 
   function updateRoomName(roomId: string, name: string): void {
-    setRooms((prev) => prev.map((r) => (r.id === roomId ? { ...r, name } : r)));
+    setRooms((prev) => prev.map((room) => (room.id === roomId ? { ...room, name } : room)));
   }
 
   function removeRoom(roomId: string): void {
-    setRooms((prev) => prev.filter((r) => r.id !== roomId));
+    setRooms((prev) => prev.filter((room) => room.id !== roomId));
   }
 
   function addItem(roomId: string): void {
-    const blank: LineItem = {
+    const blankItem: LineItem = {
       id: crypto.randomUUID(),
       name: 'New item',
       category: 'Materials',
@@ -63,8 +70,11 @@ function EstimateForm({ propertyId }: EstimateFormProps): React.JSX.Element {
       unit_cost: 0,
       unit: 'unit',
     };
+
     setRooms((prev) =>
-      prev.map((r) => (r.id === roomId ? { ...r, items: [...r.items, blank] } : r)),
+      prev.map((room) =>
+        room.id === roomId ? { ...room, items: [...room.items, blankItem] } : room,
+      ),
     );
   }
 
@@ -75,21 +85,25 @@ function EstimateForm({ propertyId }: EstimateFormProps): React.JSX.Element {
     value: LineItem[K],
   ): void {
     setRooms((prev) =>
-      prev.map((r) =>
-        r.id === roomId
+      prev.map((room) =>
+        room.id === roomId
           ? {
-              ...r,
-              items: r.items.map((i) => (i.id === itemId ? { ...i, [field]: value } : i)),
+              ...room,
+              items: room.items.map((item) =>
+                item.id === itemId ? { ...item, [field]: value } : item,
+              ),
             }
-          : r,
+          : room,
       ),
     );
   }
 
   function removeItem(roomId: string, itemId: string): void {
     setRooms((prev) =>
-      prev.map((r) =>
-        r.id === roomId ? { ...r, items: r.items.filter((i) => i.id !== itemId) } : r,
+      prev.map((room) =>
+        room.id === roomId
+          ? { ...room, items: room.items.filter((item) => item.id !== itemId) }
+          : room,
       ),
     );
   }
@@ -101,6 +115,12 @@ function EstimateForm({ propertyId }: EstimateFormProps): React.JSX.Element {
       setSaveResult({ type: 'error', message: 'No property selected — cannot save.' });
       return;
     }
+
+    if (rooms.length === 0) {
+      setSaveResult({ type: 'error', message: 'Add at least one room before saving.' });
+      return;
+    }
+
     if (totalCost === 0) {
       setSaveResult({ type: 'error', message: 'Add at least one item before saving.' });
       return;
@@ -109,10 +129,12 @@ function EstimateForm({ propertyId }: EstimateFormProps): React.JSX.Element {
     setIsSaving(true);
     setSaveResult(null);
 
+    let estimateId: string | null = null;
+
     try {
       const supabase = getSupabaseClient();
 
-      const { data: estimate, error: estError } = await supabase
+      const { data: estimate, error: estimateError } = await supabase
         .from('estimates')
         .insert({
           property_id: propertyId,
@@ -123,38 +145,43 @@ function EstimateForm({ propertyId }: EstimateFormProps): React.JSX.Element {
         .select('id')
         .single();
 
-      if (estError) throw new Error(estError.message);
+      if (estimateError) throw new Error(estimateError.message);
+      if (!estimate?.id) throw new Error('Estimate was created without an id.');
 
-      for (const room of rooms) {
-        if (room.items.length === 0) continue;
+      estimateId = estimate.id;
 
-        const roomTotal = room.items.reduce((s, i) => s + i.quantity * i.unit_cost, 0);
+      for (const [roomIndex, room] of rooms.entries()) {
+        const roomName = room.name.trim() || 'Unnamed room';
 
         const { data: savedRoom, error: roomError } = await supabase
           .from('rooms')
           .insert({
             estimate_id: estimate.id,
-            name: room.name,
-            total_cost: roomTotal,
+            name: roomName,
+            display_order: roomIndex,
           })
           .select('id')
           .single();
 
         if (roomError) throw new Error(roomError.message);
+        if (!savedRoom?.id) throw new Error(`Room "${roomName}" was created without an id.`);
 
-        const { error: itemsError } = await supabase.from('items').insert(
-          room.items.map((item) => ({
-            room_id: savedRoom.id,
-            name: item.name,
-            category: item.category,
-            quantity: item.quantity,
-            unit_cost: item.unit_cost,
-            unit: item.unit,
-            total_cost: item.quantity * item.unit_cost,
-          })),
-        );
+        if (room.items.length > 0) {
+          const { error: itemsError } = await supabase.from('items').insert(
+            room.items.map((item, itemIndex) => ({
+              room_id: savedRoom.id,
+              name: item.name.trim() || 'Unnamed item',
+              category: item.category,
+              quantity: item.quantity,
+              unit_cost: item.unit_cost,
+              unit: item.unit,
+              total_cost: item.quantity * item.unit_cost,
+              display_order: itemIndex,
+            })),
+          );
 
-        if (itemsError) throw new Error(itemsError.message);
+          if (itemsError) throw new Error(itemsError.message);
+        }
       }
 
       trackEvent('estimate_completed', {
@@ -162,10 +189,22 @@ function EstimateForm({ propertyId }: EstimateFormProps): React.JSX.Element {
         estimateId: estimate.id,
         total: totalCost,
       });
+
       setSaveResult({ type: 'success', id: estimate.id });
+      navigate(`/estimates/${estimate.id}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Save failed.';
-      trackEvent('save_failed', { context: 'estimate', message });
+
+      trackEvent('save_failed', {
+        context: 'estimate',
+        message,
+      });
+
+      if (estimateId) {
+        const supabase = getSupabaseClient();
+        void supabase.from('estimates').delete().eq('id', estimateId);
+      }
+
       setSaveResult({ type: 'error', message });
     } finally {
       setIsSaving(false);
@@ -174,7 +213,6 @@ function EstimateForm({ propertyId }: EstimateFormProps): React.JSX.Element {
 
   return (
     <form onSubmit={handleSave} className="grid gap-6">
-      {/* Description */}
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <label className="block text-sm font-medium text-slate-700">
           Description
@@ -188,12 +226,18 @@ function EstimateForm({ propertyId }: EstimateFormProps): React.JSX.Element {
         </label>
       </div>
 
-      {/* Rooms */}
       <div className="grid gap-4">
         {rooms.map((room) => {
-          const roomTotal = room.items.reduce((s, i) => s + i.quantity * i.unit_cost, 0);
+          const roomTotal = room.items.reduce(
+            (sum, item) => sum + item.quantity * item.unit_cost,
+            0,
+          );
+
           return (
-            <div key={room.id} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div
+              key={room.id}
+              className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+            >
               <div className="mb-5 flex items-center justify-between gap-4">
                 <input
                   type="text"
@@ -201,6 +245,7 @@ function EstimateForm({ propertyId }: EstimateFormProps): React.JSX.Element {
                   onChange={(e) => updateRoomName(room.id, e.target.value)}
                   className="flex-1 border-b border-slate-200 pb-1 text-lg font-semibold text-slate-900 focus:border-slate-900 focus:outline-none"
                 />
+
                 <button
                   type="button"
                   onClick={() => removeRoom(room.id)}
@@ -229,10 +274,13 @@ function EstimateForm({ propertyId }: EstimateFormProps): React.JSX.Element {
                           <input
                             type="text"
                             value={item.name}
-                            onChange={(e) => updateItem(room.id, item.id, 'name', e.target.value)}
+                            onChange={(e) =>
+                              updateItem(room.id, item.id, 'name', e.target.value)
+                            }
                             className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
                           />
                         </div>
+
                         <div className="col-span-2">
                           <select
                             value={item.category}
@@ -247,6 +295,7 @@ function EstimateForm({ propertyId }: EstimateFormProps): React.JSX.Element {
                             <option>Other</option>
                           </select>
                         </div>
+
                         <div className="col-span-1">
                           <input
                             type="number"
@@ -263,6 +312,7 @@ function EstimateForm({ propertyId }: EstimateFormProps): React.JSX.Element {
                             className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-center text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
                           />
                         </div>
+
                         <div className="col-span-2">
                           <div className="flex items-center rounded-lg border border-slate-200 px-2 py-1.5">
                             <span className="mr-1 text-sm text-slate-400">£</span>
@@ -282,9 +332,11 @@ function EstimateForm({ propertyId }: EstimateFormProps): React.JSX.Element {
                             />
                           </div>
                         </div>
+
                         <div className="col-span-1 text-right text-sm font-medium text-slate-900">
                           £{(item.quantity * item.unit_cost).toLocaleString()}
                         </div>
+
                         <div className="col-span-1 flex justify-end">
                           <button
                             type="button"
@@ -330,7 +382,6 @@ function EstimateForm({ propertyId }: EstimateFormProps): React.JSX.Element {
         Add room
       </button>
 
-      {/* Total + save */}
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-5 flex items-center justify-between">
           <span className="text-sm font-semibold text-slate-700">Total estimate</span>
@@ -345,6 +396,7 @@ function EstimateForm({ propertyId }: EstimateFormProps): React.JSX.Element {
             className="mb-4 flex items-center justify-between rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3"
           >
             <p className="text-sm text-emerald-700">Estimate saved successfully.</p>
+
             <button
               type="button"
               onClick={() =>
@@ -352,13 +404,13 @@ function EstimateForm({ propertyId }: EstimateFormProps): React.JSX.Element {
                   description: description.trim() || 'Refurbishment estimate',
                   totalCost,
                   createdAt: new Date(),
-                  rooms: rooms.map((r) => ({
-                    name: r.name,
-                    items: r.items.map((i) => ({
-                      name: i.name,
-                      category: i.category,
-                      quantity: i.quantity,
-                      unit_cost: i.unit_cost,
+                  rooms: rooms.map((room) => ({
+                    name: room.name,
+                    items: room.items.map((item) => ({
+                      name: item.name,
+                      category: item.category,
+                      quantity: item.quantity,
+                      unit_cost: item.unit_cost,
                     })),
                   })),
                 })

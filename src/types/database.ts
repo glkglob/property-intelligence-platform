@@ -271,7 +271,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      recalculate_room_total_cost: {
+        Args: { p_room_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
