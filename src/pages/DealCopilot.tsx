@@ -137,6 +137,12 @@ function DealCopilot(): React.JSX.Element {
         }
 
         setProperty(propResult.data);
+
+        if (estResult.error) {
+          setFetchError(estResult.error.message);
+          return;
+        }
+
         const est = estResult.data ?? null;
         setEstimate(est);
         if (est?.gdv) setGdvStr(String(est.gdv));
