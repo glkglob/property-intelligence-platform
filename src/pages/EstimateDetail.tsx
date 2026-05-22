@@ -6,10 +6,24 @@ import PDFPreviewModal from '../components/PDFPreviewModal';
 import { fetchEstimatePDFBlob } from '../lib/exportEstimatePDF';
 import { getSupabaseClient } from '../lib/supabaseClient';
 import type { StoredEstimate } from '../types/estimate';
-import type { Item } from '../types/item';
-import type { Room } from '../types/room';
 
-type RoomWithItems = Room & { items: Item[] };
+type RoomItem = {
+  id: string;
+  name: string;
+  category: string | null;
+  quantity: number;
+  unit_cost: number;
+  total_cost: number | null;
+  notes: string | null;
+  sort_order: number | null;
+};
+
+type RoomWithItems = {
+  id: string;
+  name: string;
+  sort_order: number | null;
+  items: RoomItem[];
+};
 
 function EstimateDetail(): React.JSX.Element {
   const { estimateId } = useParams<{ estimateId: string }>();
@@ -49,7 +63,8 @@ function EstimateDetail(): React.JSX.Element {
           .from('rooms')
           .select('*')
           .eq('estimate_id', id)
-          .order('display_order', { ascending: true, nullsFirst: false });
+          .order('sort_order', { ascending: true, nullsFirst: false })
+          .order('created_at', { ascending: true });
 
         if (cancelled) return;
         if (roomsError) {
@@ -69,7 +84,7 @@ function EstimateDetail(): React.JSX.Element {
             .from('items')
             .select('*')
             .in('room_id', roomIds)
-            .order('display_order', { ascending: true, nullsFirst: false });
+            .order('sort_order', { ascending: true, nullsFirst: false });
 
           if (cancelled) return;
           if (itemsError) {
@@ -77,7 +92,7 @@ function EstimateDetail(): React.JSX.Element {
             return;
           }
 
-          const itemsByRoom = new Map<string, Item[]>();
+          const itemsByRoom = new Map<string, RoomItem[]>();
           for (const item of itemsData ?? []) {
             const bucket = itemsByRoom.get(item.room_id) ?? [];
             bucket.push(item);
@@ -85,7 +100,9 @@ function EstimateDetail(): React.JSX.Element {
           }
 
           roomsWithItems = fetchedRooms.map((room) => ({
-            ...room,
+            id: room.id,
+            name: room.name,
+            sort_order: room.sort_order,
             items: itemsByRoom.get(room.id) ?? [],
           }));
         }
@@ -117,11 +134,11 @@ function EstimateDetail(): React.JSX.Element {
         created_at: estimate.created_at,
         rooms: rooms.map((r) => ({
           name: r.name,
-          items: (r.items ?? []).map((i) => ({
+          items: r.items.map((i) => ({
             name: i.name,
             category: i.category ?? '',
-            quantity: i.quantity ?? 0,
-            unit_cost: i.unit_cost ?? 0,
+            quantity: i.quantity,
+            unit_cost: i.unit_cost,
           })),
         })),
       });
@@ -202,8 +219,8 @@ function EstimateDetail(): React.JSX.Element {
             ) : (
               <div className="grid gap-6">
                 {rooms.map((room, index) => {
-                  const roomTotal = (room.items ?? []).reduce(
-                    (s, i) => s + (i.quantity ?? 0) * (i.unit_cost ?? 0),
+                  const roomTotal = room.items.reduce(
+                    (s, i) => s + i.quantity * i.unit_cost,
                     0,
                   );
                   return (
@@ -220,7 +237,7 @@ function EstimateDetail(): React.JSX.Element {
                         </p>
                       </div>
 
-                      {(room.items ?? []).length === 0 ? (
+                      {room.items.length === 0 ? (
                         <p className="text-sm text-slate-400">No items.</p>
                       ) : (
                         <table className="w-full text-sm">
@@ -233,22 +250,18 @@ function EstimateDetail(): React.JSX.Element {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100">
-                            {(room.items ?? []).map((item) => {
-                              const qty = item.quantity ?? 0;
-                              const cost = item.unit_cost ?? 0;
-                              return (
-                                <tr key={item.id}>
-                                  <td className="py-3 font-medium text-slate-900">{item.name}</td>
-                                  <td className="py-3 text-slate-500">{item.category}</td>
-                                  <td className="py-3 text-right text-slate-500">
-                                    {qty} × £{cost.toLocaleString()}
-                                  </td>
-                                  <td className="py-3 text-right font-semibold text-slate-900">
-                                    £{(qty * cost).toLocaleString()}
-                                  </td>
-                                </tr>
-                              );
-                            })}
+                            {room.items.map((item) => (
+                              <tr key={item.id}>
+                                <td className="py-3 font-medium text-slate-900">{item.name}</td>
+                                <td className="py-3 text-slate-500">{item.category ?? '—'}</td>
+                                <td className="py-3 text-right text-slate-500">
+                                  {item.quantity} × £{item.unit_cost.toLocaleString()}
+                                </td>
+                                <td className="py-3 text-right font-semibold text-slate-900">
+                                  £{(item.total_cost ?? item.quantity * item.unit_cost).toLocaleString()}
+                                </td>
+                              </tr>
+                            ))}
                           </tbody>
                         </table>
                       )}

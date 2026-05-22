@@ -22,33 +22,33 @@ function Navbar(): React.JSX.Element {
   }
 
   return (
-    <nav className="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
-      <Link to="/" className="text-lg font-bold text-slate-950">
+    <nav className="flex items-center justify-between border-b border-white/10 bg-slate-950 px-6 py-4">
+      <Link to="/" className="text-lg font-bold text-white">
         Property Intelligence Platform
       </Link>
 
       <div className="flex items-center gap-4 text-sm">
         {status === 'authenticated' ? (
           <>
-            <Link to="/properties" className="text-slate-700 hover:text-slate-950">
+            <Link to="/properties" className="text-slate-400 hover:text-white">
               Properties
             </Link>
             <button
               type="button"
               onClick={handleSignOut}
-              className="text-slate-700 hover:text-slate-950"
+              className="text-slate-400 hover:text-white"
             >
               Sign out
             </button>
           </>
         ) : status === 'unauthenticated' ? (
           <>
-            <Link to="/login" className="text-slate-700 hover:text-slate-950">
+            <Link to="/login" className="text-slate-400 hover:text-white">
               Login
             </Link>
             <Link
               to="/signup"
-              className="rounded-full bg-slate-950 px-4 py-2 text-white hover:bg-slate-800"
+              className="rounded-full bg-emerald-500 px-4 py-2 text-white hover:bg-emerald-400"
             >
               Join beta
             </Link>
