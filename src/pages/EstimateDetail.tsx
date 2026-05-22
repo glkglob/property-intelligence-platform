@@ -10,18 +10,18 @@ import type { StoredEstimate } from '../types/estimate';
 type RoomItem = {
   id: string;
   name: string;
-  category: string | null;
+  category: string;
   quantity: number;
   unit_cost: number;
-  total_cost: number | null;
-  notes: string | null;
-  sort_order: number | null;
+  total_cost: number;
+  unit: string;
+  display_order: number;
 };
 
 type RoomWithItems = {
   id: string;
   name: string;
-  sort_order: number | null;
+  display_order: number;
   items: RoomItem[];
 };
 
@@ -63,7 +63,7 @@ function EstimateDetail(): React.JSX.Element {
           .from('rooms')
           .select('*')
           .eq('estimate_id', id)
-          .order('sort_order', { ascending: true, nullsFirst: false })
+          .order('display_order', { ascending: true })
           .order('created_at', { ascending: true });
 
         if (cancelled) return;
@@ -84,7 +84,7 @@ function EstimateDetail(): React.JSX.Element {
             .from('items')
             .select('*')
             .in('room_id', roomIds)
-            .order('sort_order', { ascending: true, nullsFirst: false });
+            .order('display_order', { ascending: true });
 
           if (cancelled) return;
           if (itemsError) {
@@ -102,7 +102,7 @@ function EstimateDetail(): React.JSX.Element {
           roomsWithItems = fetchedRooms.map((room) => ({
             id: room.id,
             name: room.name,
-            sort_order: room.sort_order,
+            display_order: room.display_order,
             items: itemsByRoom.get(room.id) ?? [],
           }));
         }

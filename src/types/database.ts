@@ -117,41 +117,38 @@ export type Database = {
       }
       items: {
         Row: {
-          category: string | null
+          category: string
           created_at: string
           id: string
           name: string
-          notes: string | null
           quantity: number
           room_id: string
-          sort_order: number | null
-          total_cost: number | null
+          display_order: number
+          total_cost: number
           unit_cost: number
-          updated_at: string
+          unit: string
         }
         Insert: {
-          category?: string | null
+          category?: string
           created_at?: string
           id?: string
           name: string
-          notes?: string | null
           quantity?: number
           room_id: string
-          sort_order?: number | null
+          display_order?: number
           unit_cost?: number
-          updated_at?: string
+          unit?: string
         }
         Update: {
-          category?: string | null
+          category?: string
           created_at?: string
           id?: string
           name?: string
-          notes?: string | null
           quantity?: number
           room_id?: string
-          sort_order?: number | null
+          display_order?: number
           unit_cost?: number
-          updated_at?: string
+          unit?: string
         }
         Relationships: [
           {
@@ -229,24 +226,22 @@ export type Database = {
           estimate_id: string
           id: string
           name: string
-          sort_order: number | null
-          updated_at: string
+          display_order: number
+          total_cost: number
         }
         Insert: {
           created_at?: string
           estimate_id: string
           id?: string
           name: string
-          sort_order?: number | null
-          updated_at?: string
+          display_order?: number
         }
         Update: {
           created_at?: string
           estimate_id?: string
           id?: string
           name?: string
-          sort_order?: number | null
-          updated_at?: string
+          display_order?: number
         }
         Relationships: [
           {

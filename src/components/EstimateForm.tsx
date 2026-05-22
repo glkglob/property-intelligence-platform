@@ -156,7 +156,7 @@ function EstimateForm({ propertyId }: EstimateFormProps): React.JSX.Element {
           .insert({
             estimate_id: estimate.id,
             name: roomName,
-            sort_order: roomIndex,
+            display_order: roomIndex,
           })
           .select('id')
           .single();
@@ -172,7 +172,7 @@ function EstimateForm({ propertyId }: EstimateFormProps): React.JSX.Element {
               category: item.category,
               quantity: item.quantity,
               unit_cost: item.unit_cost,
-              sort_order: itemIndex,
+              display_order: itemIndex,
             })),
           );
 
