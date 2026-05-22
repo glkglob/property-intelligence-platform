@@ -11,6 +11,7 @@ interface LineItem {
   category: string;
   quantity: number;
   unit_cost: number;
+  unit: string;
 }
 
 interface Room {
@@ -67,6 +68,7 @@ function EstimateForm({ propertyId }: EstimateFormProps): React.JSX.Element {
       category: 'Materials',
       quantity: 1,
       unit_cost: 0,
+      unit: 'unit',
     };
 
     setRooms((prev) =>
@@ -172,6 +174,8 @@ function EstimateForm({ propertyId }: EstimateFormProps): React.JSX.Element {
               category: item.category,
               quantity: item.quantity,
               unit_cost: item.unit_cost,
+              unit: item.unit,
+              total_cost: item.quantity * item.unit_cost,
               display_order: itemIndex,
             })),
           );

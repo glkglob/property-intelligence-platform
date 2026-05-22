@@ -119,36 +119,38 @@ export type Database = {
         Row: {
           category: string
           created_at: string
+          display_order: number
           id: string
           name: string
           quantity: number
           room_id: string
-          display_order: number
           total_cost: number
-          unit_cost: number
           unit: string
+          unit_cost: number
         }
         Insert: {
           category?: string
           created_at?: string
+          display_order?: number
           id?: string
           name: string
           quantity?: number
           room_id: string
-          display_order?: number
-          unit_cost?: number
+          total_cost?: number
           unit?: string
+          unit_cost?: number
         }
         Update: {
           category?: string
           created_at?: string
+          display_order?: number
           id?: string
           name?: string
           quantity?: number
           room_id?: string
-          display_order?: number
-          unit_cost?: number
+          total_cost?: number
           unit?: string
+          unit_cost?: number
         }
         Relationships: [
           {
@@ -223,25 +225,27 @@ export type Database = {
       rooms: {
         Row: {
           created_at: string
+          display_order: number
           estimate_id: string
           id: string
           name: string
-          display_order: number
           total_cost: number
         }
         Insert: {
           created_at?: string
+          display_order?: number
           estimate_id: string
           id?: string
           name: string
-          display_order?: number
+          total_cost?: number
         }
         Update: {
           created_at?: string
+          display_order?: number
           estimate_id?: string
           id?: string
           name?: string
-          display_order?: number
+          total_cost?: number
         }
         Relationships: [
           {
