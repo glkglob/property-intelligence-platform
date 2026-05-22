@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import ProtectedRoute from '../components/ProtectedRoute';
+import AIDesigner from '../pages/AIDesigner';
 import AuthCallback from '../pages/AuthCallback';
 import Dashboard from '../pages/Dashboard';
 import DealCopilot from '../pages/DealCopilot';
@@ -67,6 +68,14 @@ function AppRoutes(): React.JSX.Element {
         element={
           <ProtectedRoute>
             <EstimateDetail />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ai-designer"
+        element={
+          <ProtectedRoute>
+            <AIDesigner />
           </ProtectedRoute>
         }
       />
