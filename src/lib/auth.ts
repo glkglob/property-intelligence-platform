@@ -6,7 +6,7 @@ export type AuthStatus = 'checking' | 'authenticated' | 'unauthenticated';
 
 export interface AuthSession {
   status: AuthStatus;
-  session: Session | null;
+  session?: Session | null;
   userId?: string;
 }
 
