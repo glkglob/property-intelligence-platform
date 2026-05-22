@@ -40,6 +40,8 @@ function PropertyDetail(): React.JSX.Element {
               ? 'Property not found.'
               : propResult.error.message,
           );
+        } else if (estResult.error) {
+          setFetchError(estResult.error.message);
         } else {
           setProperty(propResult.data);
           setEstimates(estResult.data ?? []);
