@@ -220,7 +220,7 @@ function EstimateDetail(): React.JSX.Element {
               <div className="grid gap-6">
                 {rooms.map((room, index) => {
                   const roomTotal = room.items.reduce(
-                    (s, i) => s + i.quantity * i.unit_cost,
+                    (s, i) => s + (i.total_cost ?? i.quantity * i.unit_cost),
                     0,
                   );
                   return (
