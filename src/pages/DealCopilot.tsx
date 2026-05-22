@@ -109,6 +109,11 @@ function DealCopilot(): React.JSX.Element {
   const [savedDeal, setSavedDeal] = useState<Deal | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  function markDirty(): void {
+    setSavedDeal(null);
+    setSaveError(null);
+  }
+
   useEffect(() => {
     if (!propertyId) return;
     let cancelled = false;
@@ -136,13 +141,12 @@ function DealCopilot(): React.JSX.Element {
           return;
         }
 
-        setProperty(propResult.data);
-
         if (estResult.error) {
           setFetchError(estResult.error.message);
           return;
         }
 
+        setProperty(propResult.data);
         const est = estResult.data ?? null;
         setEstimate(est);
         if (est?.gdv) setGdvStr(String(est.gdv));
@@ -278,7 +282,10 @@ function DealCopilot(): React.JSX.Element {
                         type="number"
                         min="0"
                         value={purchasePriceStr}
-                        onChange={(e) => setPurchasePriceStr(e.target.value)}
+                        onChange={(e) => {
+                          markDirty();
+                          setPurchasePriceStr(e.target.value);
+                        }}
                         placeholder="e.g. 180000"
                         className="w-full rounded-xl border border-slate-300 py-2.5 pl-7 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-950"
                       />
@@ -298,7 +305,10 @@ function DealCopilot(): React.JSX.Element {
                         type="number"
                         min="0"
                         value={gdvStr}
-                        onChange={(e) => setGdvStr(e.target.value)}
+                        onChange={(e) => {
+                          markDirty();
+                          setGdvStr(e.target.value);
+                        }}
                         placeholder="e.g. 250000"
                         className="w-full rounded-xl border border-slate-300 py-2.5 pl-7 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-950"
                       />
@@ -341,7 +351,10 @@ function DealCopilot(): React.JSX.Element {
                       <textarea
                         id="dc-notes"
                         value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
+                        onChange={(e) => {
+                          markDirty();
+                          setNotes(e.target.value);
+                        }}
                         rows={3}
                         placeholder="Deal notes, caveats, next steps…"
                         className="w-full resize-none rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-950"

@@ -5,23 +5,12 @@ import Layout from '../components/Layout';
 import PDFPreviewModal from '../components/PDFPreviewModal';
 import { fetchEstimatePDFBlob } from '../lib/exportEstimatePDF';
 import { getSupabaseClient } from '../lib/supabaseClient';
+import type { Tables } from '../types/database';
 import type { StoredEstimate } from '../types/estimate';
 
-type RoomItem = {
-  id: string;
-  name: string;
-  category: string;
-  quantity: number;
-  unit_cost: number;
-  total_cost: number;
-  unit: string;
-  display_order: number;
-};
+type RoomItem = Pick<Tables<'items'>, 'id' | 'room_id' | 'name' | 'category' | 'quantity' | 'unit_cost' | 'total_cost'>;
 
-type RoomWithItems = {
-  id: string;
-  name: string;
-  display_order: number;
+type RoomWithItems = Pick<Tables<'rooms'>, 'id' | 'name' | 'display_order'> & {
   items: RoomItem[];
 };
 

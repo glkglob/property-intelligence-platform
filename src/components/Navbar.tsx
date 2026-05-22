@@ -48,7 +48,7 @@ function Navbar(): React.JSX.Element {
             </Link>
             <Link
               to="/signup"
-              className="rounded-full bg-emerald-500 px-4 py-2 text-white hover:bg-emerald-400"
+              className="rounded-full bg-emerald-400 px-4 py-2 text-slate-950 hover:bg-emerald-300"
             >
               Join beta
             </Link>
