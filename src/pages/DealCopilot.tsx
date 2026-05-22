@@ -189,8 +189,10 @@ function DealCopilot(): React.JSX.Element {
         trackEvent('save_failed', { context: 'deal_copilot', message: error.message });
       } else {
         setSavedDeal(data);
-        trackEvent('estimate_completed', {
+        trackEvent('deal_analyzed', {
           propertyId,
+          dealId: data.id,
+          estimateId: estimate.id,
           score: metrics.score,
           recommendation: metrics.recommendation,
         });
