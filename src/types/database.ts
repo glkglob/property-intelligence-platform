@@ -117,43 +117,40 @@ export type Database = {
       }
       items: {
         Row: {
-          category: string | null
-          created_at: string | null
-          display_order: number | null
+          category: string
+          created_at: string
+          display_order: number
           id: string
           name: string
-          notes: string | null
-          quantity: number | null
+          quantity: number
           room_id: string
-          total_cost: number | null
-          unit: string | null
-          unit_cost: number | null
+          total_cost: number
+          unit: string
+          unit_cost: number
         }
         Insert: {
-          category?: string | null
-          created_at?: string | null
-          display_order?: number | null
+          category?: string
+          created_at?: string
+          display_order?: number
           id?: string
           name: string
-          notes?: string | null
-          quantity?: number | null
+          quantity?: number
           room_id: string
-          total_cost?: number | null
-          unit?: string | null
-          unit_cost?: number | null
+          total_cost?: number
+          unit?: string
+          unit_cost?: number
         }
         Update: {
-          category?: string | null
-          created_at?: string | null
-          display_order?: number | null
+          category?: string
+          created_at?: string
+          display_order?: number
           id?: string
           name?: string
-          notes?: string | null
-          quantity?: number | null
+          quantity?: number
           room_id?: string
-          total_cost?: number | null
-          unit?: string | null
-          unit_cost?: number | null
+          total_cost?: number
+          unit?: string
+          unit_cost?: number
         }
         Relationships: [
           {
@@ -227,34 +224,28 @@ export type Database = {
       }
       rooms: {
         Row: {
-          area_sqm: number | null
-          created_at: string | null
-          display_order: number | null
+          created_at: string
+          display_order: number
           estimate_id: string
           id: string
           name: string
-          notes: string | null
-          total_cost: number | null
+          total_cost: number
         }
         Insert: {
-          area_sqm?: number | null
-          created_at?: string | null
-          display_order?: number | null
+          created_at?: string
+          display_order?: number
           estimate_id: string
           id?: string
           name: string
-          notes?: string | null
-          total_cost?: number | null
+          total_cost?: number
         }
         Update: {
-          area_sqm?: number | null
-          created_at?: string | null
-          display_order?: number | null
+          created_at?: string
+          display_order?: number
           estimate_id?: string
           id?: string
           name?: string
-          notes?: string | null
-          total_cost?: number | null
+          total_cost?: number
         }
         Relationships: [
           {

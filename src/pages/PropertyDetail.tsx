@@ -40,6 +40,8 @@ function PropertyDetail(): React.JSX.Element {
               ? 'Property not found.'
               : propResult.error.message,
           );
+        } else if (estResult.error) {
+          setFetchError(estResult.error.message);
         } else {
           setProperty(propResult.data);
           setEstimates(estResult.data ?? []);
@@ -188,7 +190,23 @@ function PropertyDetail(): React.JSX.Element {
                   </Link>
                 </div>
 
-                <ComingSoonCard featureName="Deal Copilot" />
+                {latestEstimate ? (
+                  <div className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <p className="font-semibold text-slate-900">Deal Copilot</p>
+                    <p className="text-sm text-slate-500">
+                      Score this deal — enter purchase price and GDV to get a proceed/review/reject
+                      recommendation.
+                    </p>
+                    <Link
+                      to={`/deal/${id}`}
+                      className="mt-auto inline-flex items-center justify-center rounded-xl bg-slate-950 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-slate-800"
+                    >
+                      Analyse deal
+                    </Link>
+                  </div>
+                ) : (
+                  <ComingSoonCard featureName="Deal Copilot" />
+                )}
                 <ComingSoonCard featureName="Refurb IQ" />
               </div>
             </section>

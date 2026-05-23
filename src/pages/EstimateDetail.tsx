@@ -5,11 +5,14 @@ import Layout from '../components/Layout';
 import PDFPreviewModal from '../components/PDFPreviewModal';
 import { fetchEstimatePDFBlob } from '../lib/exportEstimatePDF';
 import { getSupabaseClient } from '../lib/supabaseClient';
+import type { Tables } from '../types/database';
 import type { StoredEstimate } from '../types/estimate';
-import type { Item } from '../types/item';
-import type { Room } from '../types/room';
 
-type RoomWithItems = Room & { items: Item[] };
+type RoomItem = Pick<Tables<'items'>, 'id' | 'name' | 'category' | 'quantity' | 'unit_cost' | 'total_cost' | 'display_order'>;
+
+type RoomWithItems = Pick<Tables<'rooms'>, 'id' | 'name' | 'display_order'> & {
+  items: RoomItem[];
+};
 
 function EstimateDetail(): React.JSX.Element {
   const { estimateId } = useParams<{ estimateId: string }>();
@@ -47,9 +50,10 @@ function EstimateDetail(): React.JSX.Element {
 
         const { data: roomsData, error: roomsError } = await supabase
           .from('rooms')
-          .select('*')
+          .select('id, name, display_order, created_at')
           .eq('estimate_id', id)
-          .order('display_order', { ascending: true, nullsFirst: false });
+          .order('display_order', { ascending: true })
+          .order('created_at', { ascending: true });
 
         if (cancelled) return;
         if (roomsError) {
@@ -58,6 +62,7 @@ function EstimateDetail(): React.JSX.Element {
         }
 
         const fetchedRooms = roomsData ?? [];
+
         let roomsWithItems: RoomWithItems[];
 
         if (fetchedRooms.length === 0) {
@@ -67,9 +72,9 @@ function EstimateDetail(): React.JSX.Element {
 
           const { data: itemsData, error: itemsError } = await supabase
             .from('items')
-            .select('*')
+            .select('id, name, category, quantity, unit_cost, total_cost, display_order, room_id')
             .in('room_id', roomIds)
-            .order('display_order', { ascending: true, nullsFirst: false });
+            .order('display_order', { ascending: true });
 
           if (cancelled) return;
           if (itemsError) {
@@ -77,15 +82,25 @@ function EstimateDetail(): React.JSX.Element {
             return;
           }
 
-          const itemsByRoom = new Map<string, Item[]>();
+          const itemsByRoom = new Map<string, RoomItem[]>();
           for (const item of itemsData ?? []) {
             const bucket = itemsByRoom.get(item.room_id) ?? [];
-            bucket.push(item);
+            bucket.push({
+              id: item.id,
+              name: item.name,
+              category: item.category,
+              quantity: item.quantity,
+              unit_cost: item.unit_cost,
+              total_cost: item.total_cost,
+              display_order: item.display_order,
+            });
             itemsByRoom.set(item.room_id, bucket);
           }
 
           roomsWithItems = fetchedRooms.map((room) => ({
-            ...room,
+            id: room.id,
+            name: room.name,
+            display_order: room.display_order,
             items: itemsByRoom.get(room.id) ?? [],
           }));
         }
@@ -117,11 +132,11 @@ function EstimateDetail(): React.JSX.Element {
         created_at: estimate.created_at,
         rooms: rooms.map((r) => ({
           name: r.name,
-          items: (r.items ?? []).map((i) => ({
+          items: r.items.map((i) => ({
             name: i.name,
-            category: i.category ?? '',
-            quantity: i.quantity ?? 0,
-            unit_cost: i.unit_cost ?? 0,
+            category: '',
+            quantity: i.quantity,
+            unit_cost: i.unit_cost,
           })),
         })),
       });
@@ -138,11 +153,11 @@ function EstimateDetail(): React.JSX.Element {
     <Layout title={estimate?.description ?? 'Estimate'}>
       <div className="grid gap-8">
         {isLoading ? (
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm">
+          <div className="rounded-3xl border border-white/10 bg-slate-900 p-6 text-sm text-slate-400">
             Loading estimate…
           </div>
         ) : fetchError ? (
-          <div className="rounded-3xl border border-red-100 bg-red-50 p-6 text-sm text-red-700 shadow-sm">
+          <div className="rounded-3xl border border-red-500/20 bg-red-950/30 p-6 text-sm text-red-400">
             {fetchError}
           </div>
         ) : estimate ? (
@@ -152,13 +167,13 @@ function EstimateDetail(): React.JSX.Element {
               <div>
                 <Link
                   to={`/properties/${estimate.property_id}`}
-                  className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900"
+                  className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-300"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
                   Back to property
                 </Link>
-                <h2 className="mt-2 text-xl font-bold text-slate-900">{estimate.description}</h2>
-                <p className="text-sm text-slate-500">
+                <h2 className="mt-2 text-xl font-bold text-white">{estimate.description}</h2>
+                <p className="text-sm text-slate-400">
                   {new Date(estimate.created_at).toLocaleDateString('en-GB', {
                     day: 'numeric',
                     month: 'long',
@@ -179,76 +194,67 @@ function EstimateDetail(): React.JSX.Element {
             </div>
 
             {exportError && (
-              <p role="alert" className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <p role="alert" className="rounded-xl border border-red-500/20 bg-red-950/30 px-4 py-3 text-sm text-red-400">
                 {exportError}
               </p>
             )}
 
             {/* Total */}
-            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+            <section className="rounded-3xl border border-white/10 bg-slate-900 p-6">
+              <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
                 Total estimate
               </p>
-              <p className="mt-1 text-4xl font-black text-slate-900">
+              <p className="mt-1 text-4xl font-black text-white">
                 £{estimate.total_cost.toLocaleString()}
               </p>
             </section>
 
             {/* Rooms breakdown */}
             {rooms.length === 0 ? (
-              <div className="rounded-3xl border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm">
+              <div className="rounded-3xl border border-white/10 bg-slate-900 p-6 text-sm text-slate-400">
                 No detailed breakdown available for this estimate.
               </div>
             ) : (
               <div className="grid gap-6">
                 {rooms.map((room, index) => {
-                  const roomTotal = (room.items ?? []).reduce(
-                    (s, i) => s + (i.quantity ?? 0) * (i.unit_cost ?? 0),
-                    0,
-                  );
+                  const roomTotal = room.items.reduce((s, i) => s + i.total_cost, 0);
                   return (
                     <section
                       key={room.id}
-                      className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+                      className="rounded-3xl border border-white/10 bg-slate-900 p-6"
                     >
                       <div className="mb-4 flex items-center justify-between">
-                        <h3 className="text-lg font-semibold text-slate-900">
+                        <h3 className="text-lg font-semibold text-white">
                           {index + 1}. {room.name}
                         </h3>
-                        <p className="text-sm font-semibold text-slate-700">
+                        <p className="text-sm font-semibold text-slate-300">
                           £{roomTotal.toLocaleString()}
                         </p>
                       </div>
 
-                      {(room.items ?? []).length === 0 ? (
-                        <p className="text-sm text-slate-400">No items.</p>
+                      {room.items.length === 0 ? (
+                        <p className="text-sm text-slate-500">No items.</p>
                       ) : (
                         <table className="w-full text-sm">
                           <thead>
-                            <tr className="border-b border-slate-200 text-left text-xs font-medium uppercase tracking-wider text-slate-400">
+                            <tr className="border-b border-white/10 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
                               <th className="pb-2">Item</th>
-                              <th className="pb-2">Category</th>
                               <th className="pb-2 text-right">Qty × Cost</th>
                               <th className="pb-2 text-right">Total</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100">
-                            {(room.items ?? []).map((item) => {
-                              const qty = item.quantity ?? 0;
-                              const cost = item.unit_cost ?? 0;
-                              return (
-                                <tr key={item.id}>
-                                  <td className="py-3 font-medium text-slate-900">{item.name}</td>
-                                  <td className="py-3 text-slate-500">{item.category}</td>
-                                  <td className="py-3 text-right text-slate-500">
-                                    {qty} × £{cost.toLocaleString()}
-                                  </td>
-                                  <td className="py-3 text-right font-semibold text-slate-900">
-                                    £{(qty * cost).toLocaleString()}
-                                  </td>
-                                </tr>
-                              );
-                            })}
+                          <tbody className="divide-y divide-white/5">
+                            {room.items.map((item) => (
+                              <tr key={item.id}>
+                                <td className="py-3 font-medium text-white">{item.name}</td>
+                                <td className="py-3 text-right text-slate-400">
+                                  {item.quantity} × £{item.unit_cost.toLocaleString()}
+                                </td>
+                                <td className="py-3 text-right font-semibold text-white">
+                                  £{item.total_cost.toLocaleString()}
+                                </td>
+                              </tr>
+                            ))}
                           </tbody>
                         </table>
                       )}
